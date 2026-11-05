@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f4f7f6;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+    .card {
+      background: #ffffff;
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    h2 {
+      margin-top: 0;
+      color: #1a365d;
+    }
+    .control-group {
+      margin-bottom: 20px;
+    }
+    label {
+      font-weight: 600;
+      display: block;
+      margin-bottom: 6px;
+    }
+    input[type=range] {
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: #e2e8f0;
+      outline: none;
+    }
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 16px;
+      margin-top: 20px;
+    }
+    .metric-card {
+      background: #edf2f7;
+      padding: 16px;
+      border-radius: 8px;
+      text-align: center;
+      border-left: 4px solid #3182ce;
+    }
+    .metric-card h4 {
+      margin: 0 0 8px 0;
+      font-size: 0.9em;
+      color: #4a5568;
+      text-transform: uppercase;
+    }
+    .metric-card span {
+      font-size: 1.4em;
+      font-weight: bold;
+      color: #2b6cb0;
+    }
+    .canvas-container {
+      text-align: center;
+      margin-top: 20px;
+    }
+    canvas {
+      background-color: #1a202c;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <h2>Simulador de Línea de Producción Eléctrica</h2>
+  <p>Ajusta los parámetros de fuerza motriz (voltaje) y resistencia en la tubería/pasillo industrial para observar la corriente de cargas y el trabajo generado.</p>
+
+  <div class="control-group">
+    <label for="voltage">Voltaje (V): <span id="vVal">12</span> V</label>
+    <input type="range" id="voltage" min="1" max="50" value="12">
+  </div>
+
+  <div class="control-group">
+    <label for="resistance">Resistencia (R): <span id="rVal">10</span> Ω</label>
+    <input type="range" id="resistance" min="1" max="50" value="10">
+  </div>
+
+  <div class="control-group">
+    <label for="time">Tiempo de Operación (t): <span id="tVal">1</span> hora(s)</label>
+    <input type="range" id="time" min="1" max="24" value="1">
+  </div>
+
+  <div class="canvas-container">
+    <canvas id="factoryCanvas" width="700" height="120"></canvas>
+  </div>
+
+  <div class="metrics-grid">
+    <div class="metric-card" style="border-color: #e53e3e;">
+      <h4>Corriente (I)</h4>
+      <span id="iRes">1.20</span> A
+    </div>
+    <div class="metric-card" style="border-color: #dd6b20;">
+      <h4>Potencia (P)</h4>
+      <span id="pRes">14.40</span> W
+    </div>
+    <div class="metric-card" style="border-color: #38a169;">
+      <h4>Energía (E)</h4>
+      <span id="eRes">0.014</span> kWh
+    </div>
+  </div>
+</div>
+
+<script>
+  const vInput = document.getElementById('voltage');
+  const rInput = document.getElementById('resistance');
+  const tInput = document.getElementById('time');
+
+  const vVal = document.getElementById('vVal');
+  const rVal = document.getElementById('rVal');
+  const tVal = document.getElementById('tVal');
+
+  const iRes = document.getElementById('iRes');
+  const pRes = document.getElementById('pRes');
+  const eRes = document.getElementById('eRes');
+
+  const canvas = document.getElementById('factoryCanvas');
+  const ctx = canvas.getContext('2d');
+
+  let particles = [];
+  const numParticles = 30;
+
+  for (let i = 0; i < numParticles; i++) {
+    particles.push({
+      x: Math.random() * canvas.width,
+      y: 30 + Math.random() * 60
+    });
+  }
+
+  function updateCalculations() {
+    const V = parseFloat(vInput.value);
+    const R = parseFloat(rInput.value);
+    const t = parseFloat(tInput.value);
+
+    vVal.textContent = V;
+    rVal.textContent = R;
+    tVal.textContent = t;
+
+    const I = V / R;
+    const P = V * I;
+    const E = (P * t) / 1000; // kWh
+
+    iRes.textContent = I.toFixed(2);
+    pRes.textContent = P.toFixed(2);
+    eRes.textContent = E.toFixed(3);
+
+    return I;
+  }
+
+  function animate() {
+    const I = updateCalculations();
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Dibujar tubería/fábrica
+    ctx.strokeStyle = '#4a5568';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(10, 20, canvas.width - 20, canvas.height - 40);
+
+    // Dibujar electrones/trabajadores
+    ctx.fillStyle = '#63b3ed';
+    particles.forEach(p => {
+      p.x += I * 1.5; // La velocidad depende proporcionalmente de la corriente
+      if (p.x > canvas.width - 20) {
+        p.x = 20;
+      }
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 6, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    requestAnimationFrame(animate);
+  }
+
+  vInput.addEventListener('input', updateCalculations);
+  rInput.addEventListener('input', updateCalculations);
+  tInput.addEventListener('input', updateCalculations);
+
+  animate();
+</script>
+
+</body>
+</html>
